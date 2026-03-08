@@ -174,7 +174,7 @@ def main(skip_enrichment: bool = False) -> None:
 
     # ── save artefacts ────────────────────────────────────────────────────────
     print(f"▶ Saving artefacts to {MODELS_DIR} …")
-    joblib.dump(model,     MODELS_DIR / "model.pkl")
+    model.save_model(MODELS_DIR / "model.ubj")   # native XGBoost format — no pickle warnings
     joblib.dump(tfidf,     MODELS_DIR / "tfidf.pkl")
     joblib.dump(scaler,    MODELS_DIR / "scaler.pkl")
     joblib.dump(explainer, MODELS_DIR / "shap_explainer.pkl")
@@ -195,7 +195,7 @@ def main(skip_enrichment: bool = False) -> None:
     joblib.dump(test_data, MODELS_DIR / "test_data.pkl")
 
     print("✅ Done.")
-    print(f"   model.pkl          {(MODELS_DIR / 'model.pkl').stat().st_size // 1024} KB")
+    print(f"   model.ubj          {(MODELS_DIR / 'model.ubj').stat().st_size // 1024} KB")
     print(f"   tfidf.pkl          {(MODELS_DIR / 'tfidf.pkl').stat().st_size // 1024} KB")
     print(f"   scaler.pkl         {(MODELS_DIR / 'scaler.pkl').stat().st_size // 1024} KB")
     print(f"   shap_explainer.pkl {(MODELS_DIR / 'shap_explainer.pkl').stat().st_size // 1024} KB")

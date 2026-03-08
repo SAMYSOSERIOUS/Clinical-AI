@@ -1,109 +1,48 @@
 @echo off
-setlocal EnableDelayedExpansion
+title Health AI App
 
-set "ROOT=%~dp0"
-REM Remove trailing backslash so paths are clean
-if "%ROOT:~-1%"=="\" set "ROOT=%ROOT:~0,-1%"
+echo ============================================
+echo   Starting Health AI Application...
+echo ============================================
 
-echo.
-echo  ==========================================
-echo   Clinical AI  ^|  Startup Script
-echo  ==========================================
-echo.
+:: Activate virtual environment
+call "%~dp0.venv\Scripts\activate.bat"
 
-REM ── 1. Python virtual environment ────────────────────────────────────────────
-if not exist "%ROOT%\.venv\Scripts\activate.bat" (
-    echo [ERROR] Virtual environment not found at .venv\
-    echo.
-    echo  Create it with:
-    echo    python -m venv .venv
-    echo.
-    pause
-    exit /b 1
-)
-echo [OK] Virtual environment found.
+:: Kill any leftover processes from a previous run
+echo Cleaning up old processes...
+taskkill /F /FI "WINDOWTITLE eq Health AI - Backend" >nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Health AI - Frontend" >nul 2>&1
+:: Also free ports 8000 and 5173 if occupied
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8000 " 2^>nul') do taskkill /F /PID %%a >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":5173 " 2^>nul') do taskkill /F /PID %%a >nul 2>&1
+timeout /t 1 /nobreak >nul
 
-REM ── 2. Backend Python dependencies ───────────────────────────────────────────
-if not exist "%ROOT%\.venv\Scripts\uvicorn.exe" (
-    echo [INFO] Backend dependencies not installed. Running pip install...
-    echo.
-    call "%ROOT%\.venv\Scripts\activate.bat"
-    pip install -r "%ROOT%\backend\requirements.txt"
-    if errorlevel 1 (
-        echo.
-        echo [ERROR] pip install failed.
-        pause
-        exit /b 1
-    )
-    echo.
-    echo [OK] Backend dependencies installed.
-) else (
-    echo [OK] Backend dependencies found.
-)
+:: Start the backend in a new window
+echo [1/2] Starting backend (FastAPI)...
+start "Health AI - Backend" cmd /k "cd /d "%~dp0" && call .venv\Scripts\activate.bat && uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000"
 
-REM ── 3. .env file ─────────────────────────────────────────────────────────────
-if not exist "%ROOT%\.env" (
-    echo [WARN] .env file not found.
-    echo        AI chat will not work without OPENAI_API_KEY.
-    echo        Create .env and add:  OPENAI_API_KEY=sk-...
-    echo.
-) else (
-    echo [OK] .env file found.
-)
-
-REM ── 4. Model artefacts ───────────────────────────────────────────────────────
-if not exist "%ROOT%\backend\models\model.pkl" (
-    echo.
-    echo [WARN] Model not trained yet. Backend starts but /predict returns 503.
-    echo.
-    echo  Train the model first (recommended before using Predict page):
-    echo    .venv\Scripts\activate
-    echo    python -m backend.scripts.train_model --skip-enrichment
-    echo.
-) else (
-    echo [OK] Model artefacts found.
-)
-
-REM ── 5. Frontend node_modules ─────────────────────────────────────────────────
-if not exist "%ROOT%\frontend\node_modules" (
-    echo.
-    echo [INFO] Frontend packages not installed. Running npm install...
-    cd /d "%ROOT%\frontend"
-    call npm install
-    if errorlevel 1 (
-        echo.
-        echo [ERROR] npm install failed. Ensure Node.js ^>=18 is installed.
-        pause
-        exit /b 1
-    )
-    cd /d "%ROOT%"
-    echo [OK] Frontend packages installed.
-) else (
-    echo [OK] Frontend node_modules found.
-)
-
-echo.
-echo  Starting services...
-echo.
-
-REM ── 6. Start backend in a new window ─────────────────────────────────────────
-start "Clinical AI - Backend (8000)" /D "%ROOT%" cmd /k ^
-    "call .venv\Scripts\activate.bat && uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000"
-
-REM Give the backend a 3-second head-start before the browser opens
+:: Give the backend a moment to start
 timeout /t 3 /nobreak >nul
 
-REM ── 7. Start frontend in a new window ────────────────────────────────────────
-start "Clinical AI - Frontend (5173)" /D "%ROOT%\frontend" cmd /k "npm run dev"
+:: Start the frontend in a new window
+echo [2/2] Starting frontend (Vite)...
+start "Health AI - Frontend" cmd /k "cd /d "%~dp0frontend" && npm run dev"
 
-echo  ==========================================
-echo   App is running in two new windows
+:: Wait a few seconds for the frontend dev server to boot up
+echo Waiting for servers to start...
+timeout /t 5 /nobreak >nul
+
+:: Open the app in the default browser
+echo Opening app in browser...
+start "" "http://localhost:5173"
+
 echo.
-echo   Frontend  -^>  http://localhost:5173
-echo   Backend   -^>  http://localhost:8000
-echo   API Docs  -^>  http://localhost:8000/docs
-echo  ==========================================
+echo ============================================
+echo   Health AI is running!
+echo   Frontend : http://localhost:5173
+echo   Backend  : http://localhost:8000
+echo   API docs : http://localhost:8000/docs
+echo ============================================
 echo.
-echo  Close both terminal windows to shut everything down.
-echo.
+echo Close the Backend and Frontend windows to stop the app.
 pause

@@ -6,7 +6,7 @@ python-multipart==0.0.12
 
 # ML / Data
 xgboost==2.1.1
-scikit-learn==1.5.2
+scikit-learn==1.8.0
 pandas==2.2.3
 numpy==2.2.1
 scipy==1.14.1

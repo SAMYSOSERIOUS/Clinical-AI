@@ -8,7 +8,10 @@ import type {
   BatchResult,
 } from "./types";
 
-const BACKEND = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+// In dev (no VITE_API_URL), use empty string so requests go through the Vite proxy
+// and the browser never fires a cross-origin preflight.
+// In production, set VITE_API_URL to the deployed backend URL.
+const BACKEND = import.meta.env.VITE_API_URL ?? "";
 
 const api = axios.create({
   baseURL: BACKEND,
