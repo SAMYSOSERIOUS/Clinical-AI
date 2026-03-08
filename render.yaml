@@ -23,10 +23,7 @@ services:
       - key: LANGCHAIN_API_KEY
         sync: false          # optional — enables LangSmith tracing
       - key: ALLOWED_ORIGINS
-        fromService:
-          name: health-ai-frontend
-          type: web
-          property: host        # auto-filled with https://health-ai-frontend.onrender.com
+        value: "https://health-ai-frontend.onrender.com"
 
   # ── Vite / React frontend ────────────────────────────────────────────────────
   - type: web
@@ -37,10 +34,7 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          name: health-ai-backend
-          type: web
-          property: host        # auto-filled with https://health-ai-backend.onrender.com
+        value: "https://health-ai-backend.onrender.com"
     headers:
       - path: /*
         name: Cache-Control
