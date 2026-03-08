@@ -1,0 +1,45 @@
+# render.yaml — Render Blueprint
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Deploy both services at once:
+#   1. Push this file to GitHub
+#   2. In Render dashboard → New → Blueprint → connect your repo
+#   3. Set the env vars marked sync: false in each service's Environment tab
+
+services:
+
+  # ── FastAPI backend ──────────────────────────────────────────────────────────
+  - type: web
+    name: health-ai-backend
+    runtime: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: OPENAI_API_KEY
+        sync: false          # set this manually in Render dashboard
+      - key: LANGCHAIN_API_KEY
+        sync: false          # optional — enables LangSmith tracing
+      - key: ALLOWED_ORIGINS
+        sync: false          # set to your frontend URL e.g. https://health-ai-frontend.onrender.com
+
+  # ── Vite / React frontend ────────────────────────────────────────────────────
+  - type: web
+    name: health-ai-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false          # set to your backend URL e.g. https://health-ai-backend.onrender.com
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite        # needed for React Router — all paths serve index.html
+        source: /*
+        destination: /index.html

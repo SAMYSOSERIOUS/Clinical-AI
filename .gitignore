@@ -1,0 +1,22 @@
+# ── Secrets ───────────────────────────────────────────────────────────────────
+.env
+*.env.local
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Data / cache ──────────────────────────────────────────────────────────────
+*.csv
+*.pkl
+*.joblib
+*.db
+
+# ── Trained model artefacts (tracked so Render has them without retraining) ──
+!backend/models/*.pkl
+!backend/models/*.json
