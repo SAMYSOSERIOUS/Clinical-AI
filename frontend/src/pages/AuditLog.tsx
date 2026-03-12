@@ -83,6 +83,7 @@ export default function AuditLog() {
           placeholder="Search by ID, session, diagnosis…"
           className="w-full bg-navy-800 border border-navy-700 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:border-teal-500 focus:outline-none"
         />
+        <p className="mt-1 text-xs text-slate-600">Filtering within current page only.</p>
       </div>
 
       <div className="glass-card overflow-x-auto">

@@ -1,0 +1,80 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Backend (FastAPI)",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\uvicorn.exe",
+      "args": [
+        "backend.main:app",
+        "--reload",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8001"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "INFO:.*uvicorn",
+          "endsPattern": "Application startup complete\\."
+        }
+      },
+      "presentation": {
+        "label": "Backend",
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "healthai",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Start Frontend (Vite)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev"],
+      "options": {
+        "cwd": "${workspaceFolder}\\frontend"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE",
+          "endsPattern": "ready in"
+        }
+      },
+      "presentation": {
+        "label": "Frontend",
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "healthai",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Start Health AI",
+      "dependsOn": ["Start Backend (FastAPI)", "Start Frontend (Vite)"],
+      "dependsOrder": "parallel",
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "never"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

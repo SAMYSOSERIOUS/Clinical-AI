@@ -117,4 +117,4 @@ def icd9_lookup(code: str) -> str:
         if prefix in ICD9_CLINICAL_DICT:
             return ICD9_CLINICAL_DICT[prefix]
 
-    return code  # fall back to the raw code itself
+    return f"Unknown code ({code})"  # fall back with user-friendly label

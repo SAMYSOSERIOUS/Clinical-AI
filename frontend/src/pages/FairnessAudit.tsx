@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFairnessAll } from "../lib/api";
 import type { FairnessResult, FairnessGroup } from "../lib/types";
@@ -86,8 +86,8 @@ function HeatmapProxy({ race, age }: { race: FairnessResult; age: FairnessResult
             <div key={ag} className="text-center text-xs text-slate-400 pb-1 truncate">{ag}</div>
           ))}
           {raceGroups.map((rg) => (
-            <>
-              <div key={rg} className="text-xs text-slate-400 flex items-center pr-2 truncate">{rg}</div>
+            <Fragment key={rg}>
+              <div className="text-xs text-slate-400 flex items-center pr-2 truncate">{rg}</div>
               {ageGroups.map((ag) => {
                 const cell = cells.find((c) => c.race === rg && c.age === ag);
                 const v = cell?.avg ?? 0;
@@ -104,7 +104,7 @@ function HeatmapProxy({ race, age }: { race: FairnessResult; age: FairnessResult
                   </div>
                 );
               })}
-            </>
+            </Fragment>
           ))}
         </div>
       </div>

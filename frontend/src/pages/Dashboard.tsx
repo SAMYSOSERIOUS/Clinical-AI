@@ -38,7 +38,12 @@ export default function Dashboard() {
   const avgProb     = rows.length
     ? (rows.reduce((s, r) => s + r.probability, 0) / rows.length * 100).toFixed(1)
     : "—";
-  const recallAt032 = curve.data?.find((p) => p.threshold === 0.32)?.recall;
+  const recallAt032 = curve.data?.length
+    ? curve.data.reduce((best, p) =>
+        Math.abs(p.threshold - 0.32) < Math.abs(best.threshold - 0.32) ? p : best,
+        curve.data[0]
+      ).recall
+    : undefined;
 
   return (
     <div className="p-6 space-y-6">

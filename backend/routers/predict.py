@@ -82,11 +82,23 @@ def predict(patient: PatientInput) -> PredictResponse:
     # ── prediction ────────────────────────────────────────────────────────────
     probability = float(ml.MODEL.predict_proba(X)[0, 1])
     prediction  = int(probability > patient.threshold)
-    risk_label  = "HIGH" if probability >= 0.5 else ("MEDIUM" if probability >= 0.3 else "LOW")
+    # HIGH only when probability is meaningfully above threshold (≥10 pp margin),
+    # so the label actually changes across preset buttons.
+    if probability >= patient.threshold:
+        risk_label = "HIGH" if probability >= patient.threshold + 0.10 else "MEDIUM"
+    else:
+        risk_label = "MEDIUM" if probability >= patient.threshold * 0.75 else "LOW"
 
     # ── SHAP ──────────────────────────────────────────────────────────────────
     shap_values = ml.EXPLAINER.shap_values(X)
-    sv_arr = np.array(shap_values).flatten()
+    # SHAP >= 0.40 with TreeExplainer returns a list [neg_class, pos_class] for
+    # binary classifiers. Always extract the positive-class (index 1) values.
+    if isinstance(shap_values, list):
+        sv_raw = np.array(shap_values[1])
+    else:
+        sv_raw = np.array(shap_values)
+    # sv_raw may be (1, n_features) or (n_features,) — always flatten to 1-D
+    sv_arr = sv_raw.flatten()
     feature_names = ml.FEATURE_NAMES
 
     top_idx = np.argsort(np.abs(sv_arr))[::-1][:10]

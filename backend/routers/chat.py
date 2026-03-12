@@ -50,14 +50,20 @@ async def _stream_agent(req: ChatRequest) -> AsyncGenerator[str, None]:
 
     history = _session_memory.setdefault(req.session_id, [])
 
-    # Prepend patient context on first message
-    if req.patient_context and not history:
-        ctx_str = (
-            "Patient context loaded:\n"
-            + "\n".join(f"  {k}: {v}" for k, v in req.patient_context.items())
+    # Inject patient context at the START of history the first time it arrives.
+    # The old `not history` guard silently dropped context after the first message;
+    # now it works regardless of how many messages are already in the session.
+    if req.patient_context:
+        already_has_context = any(
+            (getattr(m, "content", "") or "").startswith("Patient context")
+            for m in history
         )
-        history.append(HumanMessage(content=ctx_str))
-        history.append(AIMessage(content="Patient context received. How can I help?"))
+        if not already_has_context:
+            ctx_lines = ["Patient context for this session:"]
+            for k, v in req.patient_context.items():
+                ctx_lines.append(f"\n[{k}]\n{v}")
+            history.insert(0, HumanMessage(content="\n".join(ctx_lines)))
+            history.insert(1, AIMessage(content="Patient context loaded. I will use this data to answer your questions."))
 
     history.append(HumanMessage(content=req.message))
 

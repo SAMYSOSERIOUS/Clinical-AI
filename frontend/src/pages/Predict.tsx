@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { predict, uploadCSV, fetchRecallCurve } from "../lib/api";
 import type { PatientInput, PredictResponse, RecallPoint } from "../lib/types";
 import {
@@ -223,8 +224,12 @@ function CsvTab({ threshold }: { threshold: number }) {
 
 // ── Main Predict page ─────────────────────────────────────────────────────────
 export default function Predict() {
+  const [searchParams] = useSearchParams();
   const [tab, setTab]       = useState<"form" | "csv">("form");
-  const [threshold, setThr] = useState(0.32);
+  const [threshold, setThr] = useState(() => {
+    const t = parseFloat(searchParams.get("thr") ?? "");
+    return isNaN(t) ? 0.32 : Math.min(0.99, Math.max(0.01, t));
+  });
   const [form, setForm]     = useState<Omit<PatientInput, "threshold">>({
     diag_1: "428.0",
     diag_2: "250.43",
@@ -236,8 +241,13 @@ export default function Predict() {
   });
 
   const curve  = useQuery({ queryKey: ["recall-curve"], queryFn: fetchRecallCurve });
+  // Pass the FULL input as the mutation variable so no state is captured by closure.
+  // This means every mutate() call gets the live form + threshold at the moment of the call.
   const predMutation = useMutation({
-    mutationFn: () => predict({ ...form, threshold }),
+    mutationFn: (input: import("../lib/types").PatientInput) => predict(input),
+    onSuccess: (data, variables) => {
+      sessionStorage.setItem("lastPrediction", JSON.stringify({ result: data, input: variables }));
+    },
   });
 
   const result: PredictResponse | undefined = predMutation.data;
@@ -304,7 +314,7 @@ export default function Predict() {
                     return (
                       <button
                         key={p.value}
-                        onClick={() => { setThr(p.value); if (result) predMutation.mutate(); }}
+                        onClick={() => { setThr(p.value); predMutation.mutate({ ...form, threshold: p.value }); }}
                         title={p.desc}
                         className={`flex flex-col items-center px-1 py-2 rounded-lg border text-xs font-medium transition-colors ${
                           isActive
@@ -321,7 +331,7 @@ export default function Predict() {
                 {/* Fine-tune slider */}
                 <RecallSlider
                   threshold={threshold}
-                  onChange={(v) => { setThr(v); if (result) predMutation.mutate(); }}
+                  onChange={(v) => { setThr(v); predMutation.mutate({ ...form, threshold: v }); }}
                   curve={curve.data ?? []}
                 />
                 {/* Consequence hint */}
@@ -337,7 +347,7 @@ export default function Predict() {
             </div>
 
             <button
-              onClick={() => predMutation.mutate()}
+              onClick={() => predMutation.mutate({ ...form, threshold })}
               disabled={predMutation.isPending}
               className="w-full mt-2 py-2.5 rounded-lg bg-teal-500 hover:bg-teal-600 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
             >

@@ -50,7 +50,10 @@ def _predict_row(row: dict, threshold: float = 0.32, session_id: str = "") -> di
 
     probability = float(ml.MODEL.predict_proba(X)[0, 1])
     prediction  = int(probability > threshold)
-    risk_label  = "HIGH" if probability >= 0.5 else ("MEDIUM" if probability >= 0.3 else "LOW")
+    if probability >= threshold:
+        risk_label = "HIGH" if probability >= threshold + 0.10 else "MEDIUM"
+    else:
+        risk_label = "MEDIUM" if probability >= threshold * 0.75 else "LOW"
 
     audit_id = log_prediction(
         patient_dict={k: row.get(k) for k in REQUIRED_COLS},

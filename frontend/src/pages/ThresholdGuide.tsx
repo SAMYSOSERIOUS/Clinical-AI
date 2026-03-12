@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchRecallCurve } from "../lib/api";
 import type { RecallPoint } from "../lib/types";
@@ -68,6 +69,7 @@ function MetricBar({ label, value, color }: { label: string; value: number; colo
 
 export default function ThresholdGuide() {
   const [sel, setSel] = useState(1);
+  const navigate = useNavigate();
   const curve  = useQuery({ queryKey: ["recall-curve"], queryFn: fetchRecallCurve });
   const preset = PRESETS[sel];
   const c      = C[preset.color as keyof typeof C];
@@ -127,7 +129,15 @@ export default function ThresholdGuide() {
             <span className="text-white font-mono text-2xl font-bold">{(preset.threshold * 100).toFixed(0)}%</span>
             <span className="text-slate-400 text-sm">— {preset.label}</span>
           </div>
-          {m && <div className="text-right"><p className="text-xs text-slate-500">Accuracy</p><p className="text-white font-bold font-mono">{(m.accuracy * 100).toFixed(1)}%</p></div>}
+          <div className="flex items-center gap-3">
+            {m && <div className="text-right"><p className="text-xs text-slate-500">Accuracy</p><p className="text-white font-bold font-mono">{(m.accuracy * 100).toFixed(1)}%</p></div>}
+            <button
+              onClick={() => navigate(`/predict?thr=${preset.threshold}`)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-600 text-white text-xs font-semibold transition-colors"
+            >
+              Try in Predict →
+            </button>
+          </div>
         </div>
 
         {m && (

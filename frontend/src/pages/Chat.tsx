@@ -1,6 +1,6 @@
 ﻿import { useState, useRef, useEffect } from "react";
 import { streamChat, fetchAuditLog } from "../lib/api";
-import type { ChatMessage, AuditLogRow } from "../lib/types";
+import type { ChatMessage, AuditLogRow, PredictResponse, PatientInput } from "../lib/types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Send, Trash2, Bot, User, Wrench, Database } from "lucide-react";
@@ -97,7 +97,19 @@ export default function Chat() {
     let ctx: Record<string, unknown> = {};
     if (loadPatient) {
       const raw = sessionStorage.getItem("lastPrediction");
-      if (raw) ctx = { ...ctx, ...JSON.parse(raw) };
+      if (raw) {
+        try {
+          const { result, input } = JSON.parse(raw) as { result: PredictResponse; input: PatientInput };
+          ctx.last_patient = [
+            `Probability: ${(result.probability * 100).toFixed(1)}%`,
+            `Risk: ${result.risk_label}`,
+            `Threshold: ${(input.threshold * 100).toFixed(0)}%`,
+            `Diagnoses: diag_1=${input.diag_1} (${result.icd9_labels?.[input.diag_1] ?? "unknown"}), diag_2=${input.diag_2}, diag_3=${input.diag_3}`,
+            `Total visits: ${input.total_visits}, Medications: ${input.num_medications}, Days in hospital: ${input.time_in_hospital}, Lab procedures: ${input.num_lab_procedures}`,
+            `Top SHAP drivers: ${result.shap_top10.slice(0, 3).map((s) => `${s.feature}=${s.shap_value.toFixed(3)}`).join(", ")}`,
+          ].join("\n");
+        } catch { /* ignore */ }
+      }
     }
     if (auditLoaded && auditRows.length) {
       const lines = ["Recent predictions (audit log):"];

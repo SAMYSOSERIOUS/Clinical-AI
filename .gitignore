@@ -17,6 +17,10 @@ venv/
 *.joblib
 *.db
 
+# ── Temporary request/debug files ────────────────────────────────────────────
+req*.json
+tmp_*.json
+
 # ── Trained model artefacts (tracked so Render has them without retraining) ──
 !backend/models/*.pkl
 !backend/models/*.ubj
