@@ -13,11 +13,29 @@ import type {
 // In production, set VITE_API_URL to the deployed backend URL.
 const BACKEND = import.meta.env.VITE_API_URL ?? "";
 
+// Free-tier Render cold start can take ~50 s — use 65 s timeout.
 const api = axios.create({
   baseURL: BACKEND,
-  timeout: 30000,
+  timeout: 65000,
   headers: { "Content-Type": "application/json" },
 });
+
+// Retry once on network / timeout errors (covers Render free-tier cold start).
+api.interceptors.response.use(
+  (res) => res,
+  async (err) => {
+    const isRetryable =
+      !err.response &&                          // network error / timeout
+      err.config &&
+      !err.config.__retried;                    // only retry once
+    if (isRetryable) {
+      err.config.__retried = true;
+      await new Promise((r) => setTimeout(r, 5000)); // wait 5 s then retry
+      return api(err.config);
+    }
+    return Promise.reject(err);
+  }
+);
 
 // ── Prediction ────────────────────────────────────────────────────────────────
 export async function predict(input: PatientInput): Promise<PredictResponse> {
